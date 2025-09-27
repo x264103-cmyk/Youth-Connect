@@ -99,11 +99,11 @@
             </dependency>
             
             <!-- Redis -->
-            <dependency>
-                <groupId>redis.clients</groupId>
-                <artifactId>jedis</artifactId>
-                <version>${jedis.version}</version>
-            </dependency>
+<!--            <dependency>-->
+<!--                <groupId>redis.clients</groupId>-->
+<!--                <artifactId>jedis</artifactId>-->
+<!--                <version>${jedis.version}</version>-->
+<!--            </dependency>-->
             
             <!-- RabbitMQ -->
             <dependency>
@@ -153,11 +153,11 @@
                 <version>${lombok.version}</version>
             </dependency>
             
-            <dependency>
-                <groupId>com.alibaba</groupId>
-                <artifactId>fastjson</artifactId>
-                <version>${fastjson.version}</version>
-            </dependency>
+<!--            <dependency>-->
+<!--                <groupId>com.alibaba</groupId>-->
+<!--                <artifactId>fastjson</artifactId>-->
+<!--                <version>${fastjson.version}</version>-->
+<!--            </dependency>-->
             
             <!-- WebSocket -->
             <dependency>

@@ -1,0 +1,119 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.youthconnect.event.mapper.EventMapper">
+
+    <!-- 分页查询活动列表 -->
+    <select id="selectEventPage" resultType="com.youthconnect.event.entity.Event">
+        SELECT e.* FROM event e
+        <where>
+            e.status IN (1, 2) <!-- 进行中或已满 -->
+            <if test="query.keyword != null and query.keyword != ''">
+                AND (e.title LIKE CONCAT('%', #{query.keyword}, '%')
+                OR e.description LIKE CONCAT('%', #{query.keyword}, '%')
+                OR e.location LIKE CONCAT('%', #{query.keyword}, '%'))
+            </if>
+            <if test="query.categoryId != null">
+                AND e.category_id = #{query.categoryId}
+            </if>
+            <if test="query.city != null and query.city != ''">
+                AND e.location LIKE CONCAT('%', #{query.city}, '%')
+            </if>
+            <if test="query.minPrice != null">
+                AND e.price >= #{query.minPrice}
+            </if>
+            <if test="query.maxPrice != null">
+                AND e.price &lt;= #{query.maxPrice}
+            </if>
+            <if test="query.startTime != null">
+                AND e.start_time >= #{query.startTime}
+            </if>
+            <if test="query.endTime != null">
+                AND e.end_time &lt;= #{query.endTime}
+            </if>
+            <if test="query.status != null">
+                AND e.status = #{query.status}
+            </if>
+            <if test="query.isFeatured != null">
+                AND e.is_featured = #{query.isFeatured}
+            </if>
+        </where>
+        <if test="query.sortField != null and query.sortField != ''">
+            ORDER BY e.${query.sortField}
+            <if test="query.sortOrder != null and query.sortOrder != ''">
+                ${query.sortOrder}
+            </if>
+        </if>
+        <if test="query.sortField == null or query.sortField == ''">
+            ORDER BY e.create_time DESC
+        </if>
+    </select>
+
+    <!-- 根据关键词搜索活动 -->
+    <select id="searchEvents" resultType="com.youthconnect.event.entity.Event">
+        SELECT e.* FROM event e
+        WHERE e.status IN (1, 2)
+        AND (e.title LIKE CONCAT('%', #{keyword}, '%')
+        OR e.description LIKE CONCAT('%', #{keyword}, '%')
+        OR e.location LIKE CONCAT('%', #{keyword}, '%'))
+        ORDER BY e.create_time DESC
+        LIMIT #{limit}
+    </select>
+
+    <!-- 查询附近活动 -->
+    <select id="selectNearbyEvents" resultType="com.youthconnect.event.entity.Event">
+        SELECT e.*, 
+        (6371 * acos(cos(radians(#{latitude})) * cos(radians(e.latitude)) * 
+        cos(radians(e.longitude) - radians(#{longitude})) + 
+        sin(radians(#{latitude})) * sin(radians(e.latitude)))) AS distance
+        FROM event e
+        WHERE e.status IN (1, 2)
+        AND e.latitude IS NOT NULL
+        AND e.longitude IS NOT NULL
+        HAVING distance &lt;= #{radius}
+        ORDER BY distance
+        LIMIT #{limit}
+    </select>
+
+    <!-- 根据分类查询活动 -->
+    <select id="selectEventsByCategory" resultType="com.youthconnect.event.entity.Event">
+        SELECT e.* FROM event e
+        WHERE e.status IN (1, 2)
+        AND e.category_id = #{categoryId}
+        ORDER BY e.create_time DESC
+        LIMIT #{limit}
+    </select>
+
+    <!-- 查询精选活动 -->
+    <select id="selectFeaturedEvents" resultType="com.youthconnect.event.entity.Event">
+        SELECT e.* FROM event e
+        WHERE e.status IN (1, 2)
+        AND e.is_featured = 1
+        ORDER BY e.create_time DESC
+        LIMIT #{limit}
+    </select>
+
+    <!-- 查询热门活动 -->
+    <select id="selectPopularEvents" resultType="com.youthconnect.event.entity.Event">
+        SELECT e.* FROM event e
+        WHERE e.status IN (1, 2)
+        ORDER BY e.view_count DESC, e.like_count DESC
+        LIMIT #{limit}
+    </select>
+
+    <!-- 根据创建者查询活动 -->
+    <select id="selectEventsByCreator" resultType="com.youthconnect.event.entity.Event">
+        SELECT e.* FROM event e
+        WHERE e.creator_id = #{creatorId}
+        ORDER BY e.create_time DESC
+    </select>
+
+    <!-- 根据参与者查询活动 -->
+    <select id="selectEventsByParticipant" resultType="com.youthconnect.event.entity.Event">
+        SELECT e.* FROM event e
+        INNER JOIN event_signup es ON e.id = es.event_id
+        WHERE es.user_id = #{userId}
+        AND es.sign_status IN (0, 1)
+        ORDER BY es.signup_time DESC
+    </select>
+
+</mapper>

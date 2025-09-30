@@ -1,0 +1,100 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.youthconnect.userservice.mapper.UserMapper">
+
+    <!-- 分页查询用户列表 -->
+    <select id="selectUserPage" resultType="com.youthconnect.userservice.entity.User">
+        SELECT u.* FROM user u
+        <where>
+            u.status = 1
+            <if test="query.keyword != null and query.keyword != ''">
+                AND (u.nickname LIKE CONCAT('%', #{query.keyword}, '%')
+                OR u.phone LIKE CONCAT('%', #{query.keyword}, '%')
+                OR u.email LIKE CONCAT('%', #{query.keyword}, '%'))
+            </if>
+            <if test="query.gender != null">
+                AND u.gender = #{query.gender}
+            </if>
+            <if test="query.location != null and query.location != ''">
+                AND u.location LIKE CONCAT('%', #{query.location}, '%')
+            </if>
+            <if test="query.minAge != null">
+                AND YEAR(CURDATE()) - YEAR(u.birthday) >= #{query.minAge}
+            </if>
+            <if test="query.maxAge != null">
+                AND YEAR(CURDATE()) - YEAR(u.birthday) &lt;= #{query.maxAge}
+            </if>
+        </where>
+        <if test="query.sortField != null and query.sortField != ''">
+            ORDER BY u.${query.sortField}
+            <if test="query.sortOrder != null and query.sortOrder != ''">
+                ${query.sortOrder}
+            </if>
+        </if>
+        <if test="query.sortField == null or query.sortField == ''">
+            ORDER BY u.create_time DESC
+        </if>
+    </select>
+
+    <!-- 根据关键词搜索用户 -->
+    <select id="searchUsers" resultType="com.youthconnect.userservice.entity.User">
+        SELECT u.* FROM user u
+        WHERE u.status = 1
+        AND (u.nickname LIKE CONCAT('%', #{keyword}, '%')
+        OR u.phone LIKE CONCAT('%', #{keyword}, '%')
+        OR u.email LIKE CONCAT('%', #{keyword}, '%'))
+        ORDER BY u.create_time DESC
+        LIMIT #{limit}
+    </select>
+
+    <!-- 查询附近的人 -->
+    <select id="selectNearbyUsers" resultType="com.youthconnect.userservice.entity.User">
+        SELECT u.*, 
+        (6371 * acos(cos(radians(#{latitude})) * cos(radians(u.latitude)) * 
+        cos(radians(u.longitude) - radians(#{longitude})) + 
+        sin(radians(#{latitude})) * sin(radians(u.latitude)))) AS distance
+        FROM user u
+        WHERE u.status = 1
+        AND u.latitude IS NOT NULL
+        AND u.longitude IS NOT NULL
+        HAVING distance &lt;= #{radius}
+        ORDER BY distance
+        LIMIT #{limit}
+    </select>
+
+    <!-- 根据兴趣标签查询用户 -->
+    <select id="selectUsersByInterest" resultType="com.youthconnect.userservice.entity.User">
+        SELECT DISTINCT u.* FROM user u
+        INNER JOIN user_interest ui ON u.id = ui.user_id
+        WHERE u.status = 1
+        AND ui.tag = #{interest}
+        ORDER BY u.create_time DESC
+        LIMIT #{limit}
+    </select>
+
+    <!-- 查询用户的好友列表 -->
+    <select id="selectFriendsByUserId" resultType="com.youthconnect.userservice.entity.User">
+        SELECT u.* FROM user u
+        INNER JOIN friendship f ON u.id = f.friend_id
+        WHERE f.user_id = #{userId}
+        AND f.status = 1
+        ORDER BY f.create_time DESC
+    </select>
+
+    <!-- 查询用户的好友申请列表 -->
+    <select id="selectFriendRequestsByUserId" resultType="com.youthconnect.userservice.entity.User">
+        SELECT u.* FROM user u
+        INNER JOIN friendship f ON u.id = f.user_id
+        WHERE f.friend_id = #{userId}
+        AND f.status = 0
+        ORDER BY f.create_time DESC
+    </select>
+
+    <!-- 检查用户是否存在 -->
+    <select id="selectByPhoneOrEmail" resultType="com.youthconnect.userservice.entity.User">
+        SELECT * FROM user
+        WHERE phone = #{account} OR email = #{account}
+        LIMIT 1
+    </select>
+
+</mapper>

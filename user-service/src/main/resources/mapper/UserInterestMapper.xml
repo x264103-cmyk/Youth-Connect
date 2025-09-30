@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.youthconnect.userservice.mapper.UserInterestMapper">
+
+    <!-- 根据用户ID查询兴趣标签 -->
+    <select id="selectTagsByUserId" resultType="java.lang.String">
+        SELECT tag FROM user_interest
+        WHERE user_id = #{userId}
+        ORDER BY weight DESC, create_time ASC
+    </select>
+
+    <!-- 根据兴趣标签查询用户ID列表 -->
+    <select id="selectUserIdsByTag" resultType="java.lang.Long">
+        SELECT user_id FROM user_interest
+        WHERE tag = #{tag}
+    </select>
+
+    <!-- 批量插入用户兴趣标签 -->
+    <insert id="batchInsert">
+        INSERT INTO user_interest (user_id, tag, weight, create_time)
+        VALUES
+        <foreach collection="tags" item="tag" separator=",">
+            (#{userId}, #{tag}, 1.00, NOW())
+        </foreach>
+    </insert>
+
+    <!-- 根据用户ID删除所有兴趣标签 -->
+    <delete id="deleteByUserId">
+        DELETE FROM user_interest WHERE user_id = #{userId}
+    </delete>
+
+</mapper>
